@@ -6,9 +6,12 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
+use Laravel\Passport\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+
 class User extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, HasApiTokens, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -36,4 +39,20 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * for get user permissions via role
+     * @param $user
+     * @return array
+     */
+    public function getUserPermissionsViaRoles($user){
+        $permissions = $user->getPermissionsViaRoles();
+        $permissionList = [];
+        if($permissions && count($permissions) > 0) {
+            foreach ($permissions as $permission){
+                array_push($permissionList, $permission->name);
+            }
+        }
+        return $permissionList;
+    }
 }
