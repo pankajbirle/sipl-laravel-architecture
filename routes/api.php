@@ -23,5 +23,9 @@ Route::group(['prefix' => 'v1'], function () {
         Route::get('details', 'Api\V1\UserController@details');
         Route::get('users', 'Api\V1\UserController@index');
         Route::get('user/{id}', 'Api\V1\UserController@show');
+
+        Route::post('post/{id}', 'PostController@update');
+        Route::post('post', 'PostController@store');
+        Route::delete('post/{id}', 'PostController@destroy');
     });
 });

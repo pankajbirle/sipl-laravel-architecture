@@ -22,3 +22,5 @@ Route::get('/home', 'HomeController@index')->name('home');
 Route::resource('role', 'RoleController');
 
 Route::resource('permission', 'PermissionController');
+
+Route::get('/post', 'PostController@index')->name('post');

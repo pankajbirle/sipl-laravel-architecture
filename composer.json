@@ -16,7 +16,8 @@
         "laravel/tinker": "^1.0",
         "laravelista/lumen-vendor-publish": "^2.1",
         "owen-it/laravel-auditing": "^9.2",
-        "spatie/laravel-permission": "^2.37"
+        "spatie/laravel-permission": "^2.37",
+        "spatie/laravel-responsecache": "^5.0"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",
@@ -43,6 +44,9 @@
         "classmap": [
             "database/seeds",
             "database/factories"
+        ],
+        "files": [
+            "app/Http/Helpers.php"
         ]
     },
     "autoload-dev": {

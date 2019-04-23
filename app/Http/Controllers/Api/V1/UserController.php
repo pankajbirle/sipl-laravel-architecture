@@ -8,10 +8,8 @@ use App\Http\Controllers\ApiBaseController;
 use App\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Mockery\Exception;
 
 class UserController extends ApiBaseController
 {
@@ -23,7 +21,7 @@ class UserController extends ApiBaseController
      *   summary="list users",
      *   @OA\Response(response=200, description="OK", ),
      *   @OA\Response(response=400, description="Bad request, Invalid param pass in request", ),
-     *   @OA\Response(response=401, description="Unauthorised access.", ),
+     *   @OA\Response(response=401, description="Unauthenticated access.", ),
      *   @OA\Response(response=404, description="Not found.", ),
      *   @OA\Response(response=422, description="not acceptable, validation related errors"),
      *   @OA\Response(response=429, description="Too many request."),
@@ -37,28 +35,27 @@ class UserController extends ApiBaseController
             $data['users'] = User::all();
             $data['message'] = 'User listing success';
             return $this->sendSuccessResponse($data);
-
         } catch (\Exception $e) {
             return $this->sendFailureResponse();
         }
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * function for user login from API
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
      */
     public function login(){
         try {
             if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){
                 $user = Auth::user();
-                $data['token'] =  $user->createToken('MyApp')->accessToken;
-                $data['permissions'] = $user->getUserPermissionsViaRoles($user);
-                return $this->sendSuccessResponse($data);
+                $token =  $user->createToken('MyApp')->accessToken;
+                $data['user'] = $user;
+                $data['user']['roles'] = User::getUserRoles($user->id);
+                $data['user']['permissions'] = User::getUserPermissionsViaRoles($user->id);
+                return $this->sendSuccessResponse($data, 200, $token);
             }
             else{
-                return $this->sendFailureResponse('Unauthorised', 401);
+                return $this->sendFailureResponse('Unauthenticated', 401);
             }
         } catch (\Exception $e) {
             return $this->sendFailureResponse();
@@ -66,28 +63,34 @@ class UserController extends ApiBaseController
 
     }
 
+    /**
+     * function for register user from api
+     * @param Request $request
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
+     */
     public function register(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required',
-                'email' => 'required|email',
+                'email' => 'required|email|unique:users',
                 'password' => 'required',
                 'c_password' => 'required|same:password',
             ]);
             if ($validator->fails()) {
-                return $this->sendFailureResponse($validator->errors(), 401);
+                return $this->sendFailureResponse($validator->errors(), 422);
             }
             $input = $request->all();
             $input['password'] = bcrypt($input['password']);
             $user = User::create($input);
             $user->assignRole('user');
-            $data['token'] =  $user->createToken('MyApp')->accessToken;
-            $data['permissions'] = $user->getUserPermissionsViaRoles($user);
-            $data['name'] =  $user->name;
-            return $this->sendSuccessResponse($data, 201);
+            $token =  $user->createToken('MyApp')->accessToken;
+            $data['user'] = User::findOrfail($user->id);
+            $data['user']['roles'] = User::getUserRoles($user->id);
+            $data['user']['permissions'] = User::getUserPermissionsViaRoles($user->id);
+            return $this->sendSuccessResponse($data, 201, $token);
         } catch (\Exception $e) {
-            return $this->sendFailureResponse();
+            return $this->sendFailureResponse($e->getMessage());
         }
 
     }
@@ -95,10 +98,12 @@ class UserController extends ApiBaseController
     public function details()
     {
         try {
-            $user = Auth::user();
-            return $this->sendSuccessResponse($user);
+            $data['user'] = $user = Auth::user();
+            $data['user']['roles'] = User::getUserRoles($user->id);
+            $data['user']['permissions'] = User::getUserPermissionsViaRoles($user->id);
+            return $this->sendSuccessResponse($data);
         } catch (\Exception $e) {
-            return $this->sendFailureResponse();
+            return $this->sendFailureResponse($e->getMessage());
         }
 
     }
@@ -125,7 +130,7 @@ class UserController extends ApiBaseController
      *         )),
      *   @OA\Response(response=200, description="OK", ),
      *   @OA\Response(response=400, description="Bad request, Invalid param pass in request", ),
-     *   @OA\Response(response=401, description="Unauthorised access.", ),
+     *   @OA\Response(response=401, description="Unauthenticated access.", ),
      *   @OA\Response(response=404, description="Not found.", ),
      *   @OA\Response(response=422, description="not acceptable, validation related errors"),
      *   @OA\Response(response=429, description="Too many request."),
@@ -136,8 +141,10 @@ class UserController extends ApiBaseController
     public function show($id)
     {
         try {
-            $user = User::findOrfail($id);
-            return $this->sendSuccessResponse($user);
+            $data['user'] = $user = User::findOrfail($id);
+            $data['user']['roles'] = User::getUserRoles($user->id);
+            $data['user']['permissions'] = User::getUserPermissionsViaRoles($user->id);
+            return $this->sendSuccessResponse($data);
         } catch (ModelNotFoundException $e) {
             return $this->sendFailureResponse('User not found');
         } catch (\Exception $e) {

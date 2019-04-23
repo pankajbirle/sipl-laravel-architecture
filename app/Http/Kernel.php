@@ -35,6 +35,8 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \Spatie\ResponseCache\Middlewares\CacheResponse::class,
+            \App\Http\Middleware\CleanInput::class
         ],
 
         'api' => [
@@ -47,6 +49,8 @@ class Kernel extends HttpKernel
            // \Laravel\Passport\Http\Middleware\CreateFreshApiToken::class,
             'throttle:60,1',
             'bindings',
+            \Spatie\ResponseCache\Middlewares\CacheResponse::class,
+            \App\Http\Middleware\CleanInput::class
         ],
     ];
 
@@ -67,6 +71,8 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'doNotCacheResponse' => \Spatie\ResponseCache\Middlewares\DoNotCacheResponse::class,
+        //'clean-input' => \App\Http\Middleware\CleanInput::class,
     ];
 
     /**

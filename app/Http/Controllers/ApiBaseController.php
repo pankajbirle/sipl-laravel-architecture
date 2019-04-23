@@ -15,24 +15,24 @@ use OpenApi as OA;
  *     contact={
  *              "email": "support@example.com"
  *          }
- *     ),
- *   @OA\Response(
- *     response=200,
- *     description="A list with users"
- *   ),
+ *     )
  */
 
 class ApiBaseController extends Controller
 {
 
-    public function sendSuccessResponse($result = [], $code = 200)
+    public function sendSuccessResponse($result = [], $code = 200, $token = '')
     {
-        if(count($result) == 0){
+
+        if(is_array($result) && count($result) == 0){
             $result = (object)$result;
         }
         $response = [
             'success'   => $result
         ];
+        if($token && $token != ''){
+            return response()->json($response, $code)->header('token', $token);
+        }
         return response()->json($response, $code);
     }
 
